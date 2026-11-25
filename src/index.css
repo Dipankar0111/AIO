@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    /* LIGHT MODE — Ivory & Espresso */
+    --bg-main: #F7F4EE;
+    --bg-sidebar: #F0EBE2;
+    --bg-surface: #FFFDFA;
+    --bg-elevated: #FFFFFF;
+    --border-default: #C8C2B6;
+    --border-strong: #B5ACA0;
+    --border-card: #C4BEB2;
+    --text-primary: #29231E;
+    --text-secondary: #81766A;
+    --text-muted: #A69A8D;
+    --primary-brand: #49392F;
+    --brand-hover: #625044;
+    --accent: #B18B68;
+    --accent-light: #F2EBE1;
+    --code-bg: #EFE9DE;
+    --highlight-user: #EFECE4;
+  }
+
+  .dark, [data-theme='dark'] {
+    color-scheme: dark;
+    /* DARK MODE — Obsidian & Espresso */
+    --bg-main: #171614;
+    --bg-sidebar: #1D1B18;
+    --bg-surface: #211E1A;
+    --bg-elevated: #2C2721;
+    --border-default: #383129;
+    --border-strong: #514638;
+    --text-primary: #F2EDE5;
+    --text-secondary: #A79B8C;
+    --text-muted: #83796D;
+    --primary-brand: #C6A783;
+    --brand-hover: #D2B48C;
+    --accent: #D2B48C;
+    --accent-light: #28231C;
+    --code-bg: #1C1916;
+    --highlight-user: #26221D;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+    overflow-x: hidden;
+  }
+
+  /* Editorial Headings hierarchy */
+  .font-editorial {
+    font-family: 'Playfair Display', Georgia, serif;
+    letter-spacing: -0.015em;
+  }
+}
+
+/* Warm minimal refined scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Luxury micro-interaction transitions */
+* {
+  border-color: var(--border-default);
+}
+
+input, textarea, select {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent) !important;
+  outline: none;
+}
