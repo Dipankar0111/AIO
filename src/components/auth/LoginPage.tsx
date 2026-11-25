@@ -230,7 +230,7 @@ export const LoginPage: React.FC = () => {
                     type="text"
                     value={fullName}
                     onChange={e => setFullName(e.target.value)}
-                    placeholder="Dipankar Sahoo"
+                    placeholder="Your full name"
                     className="w-full rounded-btn border border-theme-border bg-theme-elevated pl-9 pr-3.5 py-2.5 text-xs text-theme-primary placeholder:text-theme-muted focus:border-theme-accent focus:outline-none"
                   />
                 </div>
