@@ -191,7 +191,7 @@ export const SettingsModal: React.FC = () => {
           <div className="rounded-card border border-theme-border bg-theme-elevated p-4 text-xs text-theme-secondary space-y-2.5 shadow-warm-sm">
             <div className="flex items-center gap-2 text-theme-primary font-semibold font-editorial">
               <Cpu className="h-4 w-4 text-theme-accent" />
-              <span>Supported Groq LPU Models in AIO Studio</span>
+              <span>Supported Groq LPU Models in AIO</span>
             </div>
             <ul className="grid grid-cols-2 gap-2 text-[11px] text-theme-secondary pt-1 font-mono">
               <li className="flex items-center gap-1.5">

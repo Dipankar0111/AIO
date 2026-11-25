@@ -20,6 +20,7 @@ import {
 
 export const LLMPlayground: React.FC = () => {
   const {
+    user,
     apiKey,
     addNote,
     showToast,
@@ -28,6 +29,11 @@ export const LLMPlayground: React.FC = () => {
     setIsSettingsModalOpen,
     isConfigured
   } = useApp();
+
+  const userFirstName =
+    (user?.user_metadata?.full_name as string | undefined)?.trim().split(/\s+/)[0] ||
+    user?.email?.split('@')[0] ||
+    'Creator';
 
   // Model & Inference Parameters
   const [availableModels, setAvailableModels] = useState<GroqModelConfig[]>(GROQ_MODELS);
@@ -573,7 +579,7 @@ export const LLMPlayground: React.FC = () => {
           <div className="flex items-center justify-center gap-2.5 mb-6">
             <span className="text-theme-accent text-2xl font-serif select-none leading-none">✳</span>
             <h2 className="font-editorial text-2xl sm:text-3xl font-medium tracking-tight text-theme-primary">
-              Back at it, Kumar
+              Back at it, {userFirstName}
             </h2>
           </div>
 

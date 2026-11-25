@@ -9,9 +9,33 @@ import { NotepadDrawer } from './components/drawers/NotepadDrawer';
 import { CalendarDrawer } from './components/drawers/CalendarDrawer';
 import { SettingsModal } from './components/common/SettingsModal';
 import { ToastContainer } from './components/common/ToastContainer';
+import { LoginPage } from './components/auth/LoginPage';
+import { isSupabaseConfigured } from './lib/supabase';
 
 const MainLayout: React.FC = () => {
-  const { activeTab } = useApp();
+  const { activeTab, user, authLoading } = useApp();
+
+  if (isSupabaseConfigured && authLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-theme-main text-theme-primary">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-theme-brand text-theme-surface shadow-warm-md animate-pulse">
+            <span className="font-editorial text-xs italic font-bold">AIO</span>
+          </div>
+          <span className="text-xs font-mono text-theme-muted">Loading workspace...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (isSupabaseConfigured && !user) {
+    return (
+      <>
+        <LoginPage />
+        <ToastContainer />
+      </>
+    );
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-theme-main text-theme-primary transition-colors duration-180">

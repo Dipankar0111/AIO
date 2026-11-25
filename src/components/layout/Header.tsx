@@ -8,11 +8,14 @@ import {
   Moon,
   Sparkles,
   Camera,
-  CalendarDays
+  CalendarDays,
+  LogOut
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const {
+    user,
+    signOut,
     activeTab,
     setActiveTab,
     isNotepadDrawerOpen,
@@ -140,6 +143,18 @@ export const Header: React.FC = () => {
         >
           <Settings className="h-3.5 w-3.5" />
         </button>
+
+        {/* 5. Sign Out Button on mobile / quick access */}
+        {user && (
+          <button
+            type="button"
+            onClick={signOut}
+            className="flex md:hidden h-8 w-8 items-center justify-center rounded-full border border-theme-border bg-theme-surface text-theme-secondary hover:text-rose-500 hover:border-rose-400/50 transition-all duration-160 shadow-warm-sm"
+            title={`Sign out (${user.email || 'Account'})`}
+          >
+            <LogOut className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
     </header>
   );

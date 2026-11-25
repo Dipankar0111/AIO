@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import type { User } from '@supabase/supabase-js';
 import {
   Note,
   CalendarEvent,
@@ -12,10 +13,17 @@ import {
   INITIAL_TODOS
 } from '../utils/constants';
 import { loadFromStorage, saveToStorage } from '../utils/storage';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export type AppTheme = 'light' | 'dark';
 
 interface AppContextType {
+  // Auth
+  user: User | null;
+  authLoading: boolean;
+  signOut: () => Promise<void>;
+  updateProfileName: (name: string) => Promise<void>;
+
   // Theme System
   theme: AppTheme;
   setTheme: (theme: AppTheme) => void;
@@ -90,6 +98,57 @@ const STORAGE_KEYS = {
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Supabase Auth State
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState<boolean>(isSupabaseConfigured);
+
+  useEffect(() => {
+    if (!supabase) {
+      setAuthLoading(false);
+      return;
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const signOut = useCallback(async () => {
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    setUser(null);
+  }, []);
+
+  const updateProfileName = useCallback(async (name: string) => {
+    const trimmed = name.trim();
+    if (!supabase || !trimmed) return;
+    const { data, error } = await supabase.auth.updateUser({
+      data: { full_name: trimmed }
+    });
+    if (error) {
+      throw error;
+    }
+    if (data.user) {
+      setUser(data.user);
+    }
+  }, []);
+
+  const getScopedKey = useCallback(
+    (baseKey: string) => (user?.id ? `${baseKey}_${user.id}` : baseKey),
+    [user?.id]
+  );
+
   // Theme state: default to dark (Obsidian & Espresso) or saved preference / system
   const [theme, setThemeState] = useState<AppTheme>(() => {
     const saved = loadFromStorage<AppTheme | null>(STORAGE_KEYS.THEME, null);
@@ -165,15 +224,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isConfigured = apiKey.length > 5;
 
-  // Notes
+  // Notes (scoped per authenticated user)
   const [notes, setNotes] = useState<Note[]>(() =>
     loadFromStorage<Note[]>(STORAGE_KEYS.NOTES, INITIAL_NOTES)
   );
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(notes[0]?.id || null);
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.NOTES, notes);
-  }, [notes]);
+    const loaded = loadFromStorage<Note[]>(getScopedKey(STORAGE_KEYS.NOTES), INITIAL_NOTES);
+    setNotes(loaded);
+    setSelectedNoteId(loaded[0]?.id || null);
+  }, [getScopedKey]);
+
+  useEffect(() => {
+    saveToStorage(getScopedKey(STORAGE_KEYS.NOTES), notes);
+  }, [notes, getScopedKey]);
 
   const addNote = useCallback(
     ({
@@ -226,14 +291,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   }, []);
 
-  // Calendar
+  // Calendar (scoped per authenticated user)
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(() =>
     loadFromStorage<CalendarEvent[]>(STORAGE_KEYS.CALENDAR, INITIAL_CALENDAR_EVENTS)
   );
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.CALENDAR, calendarEvents);
-  }, [calendarEvents]);
+    setCalendarEvents(
+      loadFromStorage<CalendarEvent[]>(getScopedKey(STORAGE_KEYS.CALENDAR), INITIAL_CALENDAR_EVENTS)
+    );
+  }, [getScopedKey]);
+
+  useEffect(() => {
+    saveToStorage(getScopedKey(STORAGE_KEYS.CALENDAR), calendarEvents);
+  }, [calendarEvents, getScopedKey]);
 
   const addCalendarEvent = useCallback((eventData: Omit<CalendarEvent, 'id'>) => {
     const newEvent: CalendarEvent = {
@@ -266,14 +337,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCalendarEvents(prev => prev.filter(e => e.date !== date));
   }, []);
 
-  // To-Do
+  // To-Do (scoped per authenticated user)
   const [todoItems, setTodoItems] = useState<TodoItem[]>(() =>
     loadFromStorage<TodoItem[]>(STORAGE_KEYS.TODOS, INITIAL_TODOS)
   );
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.TODOS, todoItems);
-  }, [todoItems]);
+    setTodoItems(loadFromStorage<TodoItem[]>(getScopedKey(STORAGE_KEYS.TODOS), INITIAL_TODOS));
+  }, [getScopedKey]);
+
+  useEffect(() => {
+    saveToStorage(getScopedKey(STORAGE_KEYS.TODOS), todoItems);
+  }, [todoItems, getScopedKey]);
 
   const addTodoItem = useCallback((todoData: Omit<TodoItem, 'id' | 'createdAt'>) => {
     const newTodo: TodoItem = {
@@ -365,6 +440,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider
       value={{
+        user,
+        authLoading,
+        signOut,
+        updateProfileName,
         theme,
         setTheme,
         toggleTheme,

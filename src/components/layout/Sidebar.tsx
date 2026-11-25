@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import {
   Sparkles,
@@ -8,11 +8,19 @@ import {
   CheckSquare,
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LogOut,
+  Pencil,
+  Check,
+  X
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const {
+    user,
+    signOut,
+    updateProfileName,
+    showToast,
     activeTab,
     setActiveTab,
     isSidebarCollapsed,
@@ -27,7 +35,47 @@ export const Sidebar: React.FC = () => {
     isConfigured
   } = useApp();
 
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const [isSavingName, setIsSavingName] = useState(false);
+
   const pendingTodos = todoItems.filter(t => !t.completed).length;
+
+  const displayName =
+    (user?.user_metadata?.full_name as string | undefined)?.trim() ||
+    (user?.user_metadata?.name as string | undefined)?.trim() ||
+    user?.email?.split('@')[0] ||
+    'User';
+  const avatarUrl = (user?.user_metadata?.avatar_url as string | undefined) || '';
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0].toUpperCase())
+    .join('') || 'U';
+
+  const startEditingName = () => {
+    setNameDraft(displayName);
+    setIsEditingName(true);
+  };
+
+  const handleSaveName = async () => {
+    const trimmed = nameDraft.trim();
+    if (!trimmed || trimmed === displayName) {
+      setIsEditingName(false);
+      return;
+    }
+    setIsSavingName(true);
+    try {
+      await updateProfileName(trimmed);
+      showToast('Profile name updated', 'success');
+      setIsEditingName(false);
+    } catch {
+      showToast('Failed to update profile name', 'error');
+    } finally {
+      setIsSavingName(false);
+    }
+  };
 
   return (
     <aside
@@ -67,7 +115,7 @@ export const Sidebar: React.FC = () => {
             {!isSidebarCollapsed && (
               <div className="flex flex-col min-w-0 transition-opacity duration-200">
                 <span className="font-editorial text-sm font-bold tracking-tight text-theme-primary truncate">
-                  AIO Studio
+                  AIO
                 </span>
                 <span className="text-[10px] text-theme-muted tracking-wide font-mono truncate">
                   AI Chat · Notes · To-Do
@@ -283,6 +331,122 @@ export const Sidebar: React.FC = () => {
             <span className="truncate whitespace-nowrap">Settings</span>
           )}
         </button>
+
+        {/* User Profile & Sign Out (when authenticated) */}
+        {user && (
+          <div className="mt-1 border-t border-theme-border pt-2">
+            {isSidebarCollapsed ? (
+              <div className="flex flex-col items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarCollapsed(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-theme-brand/15 text-theme-accent border border-theme-borderStrong text-xs font-semibold overflow-hidden hover:border-theme-accent transition-colors"
+                  title={`${displayName} (${user.email || 'Account'})`}
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                  ) : (
+                    initials
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="flex h-8 w-full items-center justify-center rounded-btn text-theme-secondary hover:text-rose-500 hover:bg-theme-surface/70 transition-colors"
+                  title={`Sign out (${user.email || 'Account'})`}
+                >
+                  <LogOut className="h-4 w-4 shrink-0" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-2 rounded-btn px-2 py-1.5 hover:bg-theme-surface/50 transition-colors">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-theme-brand/15 text-theme-accent border border-theme-borderStrong text-xs font-semibold overflow-hidden">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                    ) : (
+                      initials
+                    )}
+                  </div>
+
+                  <div className="flex flex-col min-w-0 flex-1">
+                    {isEditingName ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={nameDraft}
+                          onChange={e => setNameDraft(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleSaveName();
+                            if (e.key === 'Escape') setIsEditingName(false);
+                          }}
+                          autoFocus
+                          disabled={isSavingName}
+                          className="w-full min-w-0 rounded border border-theme-accent bg-theme-surface px-1.5 py-0.5 text-xs text-theme-primary focus:outline-none"
+                          placeholder="Your name"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSaveName}
+                          disabled={isSavingName}
+                          className="p-0.5 text-emerald-500 hover:text-emerald-400"
+                          title="Save name"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingName(false)}
+                          disabled={isSavingName}
+                          className="p-0.5 text-theme-muted hover:text-theme-primary"
+                          title="Cancel"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="group flex items-center gap-1 min-w-0">
+                        <button
+                          type="button"
+                          onClick={startEditingName}
+                          className="text-left text-xs font-medium text-theme-primary truncate hover:text-theme-accent transition-colors"
+                          title="Click to edit profile name"
+                        >
+                          {displayName}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={startEditingName}
+                          className="opacity-0 group-hover:opacity-100 text-theme-muted hover:text-theme-accent transition-opacity shrink-0"
+                          title="Edit profile name"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
+
+                    <span
+                      className="text-[10px] text-theme-muted font-mono truncate"
+                      title={user.email || ''}
+                    >
+                      {user.email}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="shrink-0 rounded-btn p-1.5 text-theme-secondary hover:text-rose-500 hover:bg-theme-surface transition-colors"
+                  title={`Sign out (${user.email || 'Account'})`}
+                  aria-label="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </aside>
   );
