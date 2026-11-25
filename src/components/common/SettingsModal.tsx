@@ -14,10 +14,10 @@ import {
   Cpu
 } from 'lucide-react';
 import { testGroqConnection } from '../../services/groq';
-import { INITIAL_NOTES, INITIAL_CALENDAR_EVENTS, INITIAL_TODOS } from '../../utils/constants';
 
 export const SettingsModal: React.FC = () => {
   const {
+    user,
     isSettingsModalOpen,
     setIsSettingsModalOpen,
     apiKey,
@@ -83,10 +83,11 @@ export const SettingsModal: React.FC = () => {
   };
 
   const handleResetData = () => {
-    if (window.confirm('Reset all notes, calendar blocks, and to-dos to original sample data?')) {
-      localStorage.setItem('groq_nexus_notes_v1', JSON.stringify(INITIAL_NOTES));
-      localStorage.setItem('groq_nexus_calendar_v1', JSON.stringify(INITIAL_CALENDAR_EVENTS));
-      localStorage.setItem('groq_nexus_todos_v1', JSON.stringify(INITIAL_TODOS));
+    if (window.confirm('Clear all notes, calendar blocks, and to-dos?')) {
+      const suffix = user?.id ? `_${user.id}` : '';
+      localStorage.setItem(`groq_nexus_notes_v1${suffix}`, JSON.stringify([]));
+      localStorage.setItem(`groq_nexus_calendar_v1${suffix}`, JSON.stringify([]));
+      localStorage.setItem(`groq_nexus_todos_v1${suffix}`, JSON.stringify([]));
       window.location.reload();
     }
   };
@@ -224,8 +225,8 @@ export const SettingsModal: React.FC = () => {
           {/* Reset Workspace */}
           <div className="pt-3 border-t border-theme-border flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold font-editorial text-theme-primary">Reset Workspace Data</p>
-              <p className="text-[11px] text-theme-muted">Restore initial sample documents &amp; schedule</p>
+              <p className="text-xs font-semibold font-editorial text-theme-primary">Clear Workspace Data</p>
+              <p className="text-[11px] text-theme-muted">Remove all saved notes, schedule &amp; to-dos</p>
             </div>
             <button
               type="button"

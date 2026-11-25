@@ -7,11 +7,6 @@ import {
   ToastNotification,
   NoteSource
 } from '../types';
-import {
-  INITIAL_NOTES,
-  INITIAL_CALENDAR_EVENTS,
-  INITIAL_TODOS
-} from '../utils/constants';
 import { loadFromStorage, saveToStorage } from '../utils/storage';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
@@ -226,12 +221,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Notes (scoped per authenticated user)
   const [notes, setNotes] = useState<Note[]>(() =>
-    loadFromStorage<Note[]>(STORAGE_KEYS.NOTES, INITIAL_NOTES)
+    loadFromStorage<Note[]>(STORAGE_KEYS.NOTES, [])
   );
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(notes[0]?.id || null);
 
   useEffect(() => {
-    const loaded = loadFromStorage<Note[]>(getScopedKey(STORAGE_KEYS.NOTES), INITIAL_NOTES);
+    const loaded = loadFromStorage<Note[]>(getScopedKey(STORAGE_KEYS.NOTES), []);
     setNotes(loaded);
     setSelectedNoteId(loaded[0]?.id || null);
   }, [getScopedKey]);
@@ -293,12 +288,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Calendar (scoped per authenticated user)
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(() =>
-    loadFromStorage<CalendarEvent[]>(STORAGE_KEYS.CALENDAR, INITIAL_CALENDAR_EVENTS)
+    loadFromStorage<CalendarEvent[]>(STORAGE_KEYS.CALENDAR, [])
   );
 
   useEffect(() => {
     setCalendarEvents(
-      loadFromStorage<CalendarEvent[]>(getScopedKey(STORAGE_KEYS.CALENDAR), INITIAL_CALENDAR_EVENTS)
+      loadFromStorage<CalendarEvent[]>(getScopedKey(STORAGE_KEYS.CALENDAR), [])
     );
   }, [getScopedKey]);
 
@@ -339,11 +334,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // To-Do (scoped per authenticated user)
   const [todoItems, setTodoItems] = useState<TodoItem[]>(() =>
-    loadFromStorage<TodoItem[]>(STORAGE_KEYS.TODOS, INITIAL_TODOS)
+    loadFromStorage<TodoItem[]>(STORAGE_KEYS.TODOS, [])
   );
 
   useEffect(() => {
-    setTodoItems(loadFromStorage<TodoItem[]>(getScopedKey(STORAGE_KEYS.TODOS), INITIAL_TODOS));
+    setTodoItems(loadFromStorage<TodoItem[]>(getScopedKey(STORAGE_KEYS.TODOS), []));
   }, [getScopedKey]);
 
   useEffect(() => {
