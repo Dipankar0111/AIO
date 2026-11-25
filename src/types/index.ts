@@ -48,6 +48,7 @@ export interface GroqModelConfig {
   isVision?: boolean;
   badge?: string;
   speedRating: 'ultra-fast' | 'fast' | 'balanced';
+  provider?: 'groq' | 'gemini';
 }
 
 export interface ChatMessage {
@@ -55,6 +56,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
+  pinned?: boolean;
   metrics?: {
     latencyMs: number;
     completionTokens?: number;

@@ -11,7 +11,8 @@ import {
   Sparkles,
   ThumbsUp,
   Bookmark,
-  Zap
+  Zap,
+  Pin
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { triggerConfetti } from '../../utils/confetti';
@@ -19,12 +20,14 @@ import { triggerConfetti } from '../../utils/confetti';
 interface ChatMessageItemProps {
   message: ChatMessage;
   onSaveToNotepad: (content: string, title?: string) => void;
+  onTogglePin?: (id: string) => void;
   onRegenerate?: () => void;
 }
 
 export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   message,
-  onSaveToNotepad
+  onSaveToNotepad,
+  onTogglePin
 }) => {
   const { addNote, addCalendarEvent, addTodoItem, showToast, setIsNotepadDrawerOpen, setIsCalendarDrawerOpen } = useApp();
   const [copied, setCopied] = useState(false);
@@ -220,6 +223,19 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                   <ThumbsUp className="h-3.5 w-3.5" />
                 </button>
 
+                {onTogglePin && (
+                  <button
+                    type="button"
+                    onClick={() => onTogglePin(message.id)}
+                    className={`p-1.5 rounded-btn transition-colors ${
+                      message.pinned ? 'text-theme-accent bg-theme-accentLight' : 'text-theme-muted hover:text-theme-secondary'
+                    }`}
+                    title={message.pinned ? 'Unpin from context window' : 'Pin to context window (always retained)'}
+                  >
+                    <Pin className="h-3.5 w-3.5" />
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => {
@@ -245,9 +261,23 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
               {message.content}
             </p>
           </div>
-          <span className="mt-1 text-[10px] text-theme-muted font-mono pr-2">
-            {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
+          <div className="mt-1 flex items-center gap-1.5 pr-2">
+            {onTogglePin && (
+              <button
+                type="button"
+                onClick={() => onTogglePin(message.id)}
+                className={`p-1 rounded transition-colors ${
+                  message.pinned ? 'text-theme-accent bg-theme-accentLight' : 'text-theme-muted hover:text-theme-secondary'
+                }`}
+                title={message.pinned ? 'Unpin from context window' : 'Pin to context window'}
+              >
+                <Pin className="h-3 w-3" />
+              </button>
+            )}
+            <span className="text-[10px] text-theme-muted font-mono">
+              {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
         </div>
       )}
     </div>

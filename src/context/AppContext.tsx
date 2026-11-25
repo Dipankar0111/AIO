@@ -36,9 +36,11 @@ interface AppContextType {
   isSettingsModalOpen: boolean;
   setIsSettingsModalOpen: (open: boolean) => void;
 
-  // Groq API Key
+  // API Keys (Groq & Gemini)
   apiKey: string;
   setApiKey: (key: string) => void;
+  geminiApiKey: string;
+  setGeminiApiKey: (key: string) => void;
   isConfigured: boolean;
 
   // Notes
@@ -89,7 +91,8 @@ const STORAGE_KEYS = {
   NOTES: 'groq_nexus_notes_v1',
   CALENDAR: 'groq_nexus_calendar_v1',
   TODOS: 'groq_nexus_todos_v1',
-  API_KEY: 'groq_nexus_api_key'
+  API_KEY: 'groq_nexus_api_key',
+  GEMINI_API_KEY: 'groq_nexus_gemini_api_key'
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -217,7 +220,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  const isConfigured = apiKey.length > 5;
+  const [geminiApiKey, setGeminiApiKeyState] = useState<string>(() => {
+    return loadFromStorage<string>(STORAGE_KEYS.GEMINI_API_KEY, '');
+  });
+
+  const setGeminiApiKey = useCallback((key: string) => {
+    const trimmed = key.trim();
+    setGeminiApiKeyState(trimmed);
+    if (typeof window !== 'undefined') {
+      if (trimmed) {
+        localStorage.setItem(STORAGE_KEYS.GEMINI_API_KEY, trimmed);
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.GEMINI_API_KEY);
+      }
+    }
+  }, []);
+
+  const isConfigured = apiKey.length > 5 || geminiApiKey.length > 5;
 
   // Notes (scoped per authenticated user)
   const [notes, setNotes] = useState<Note[]>(() =>
@@ -454,6 +473,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsSettingsModalOpen,
         apiKey,
         setApiKey,
+        geminiApiKey,
+        setGeminiApiKey,
         isConfigured,
         notes,
         selectedNoteId,

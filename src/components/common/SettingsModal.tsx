@@ -14,6 +14,7 @@ import {
   Cpu
 } from 'lucide-react';
 import { testGroqConnection } from '../../services/groq';
+import { testGeminiConnection } from '../../services/gemini';
 
 export const SettingsModal: React.FC = () => {
   const {
@@ -22,6 +23,8 @@ export const SettingsModal: React.FC = () => {
     setIsSettingsModalOpen,
     apiKey,
     setApiKey,
+    geminiApiKey,
+    setGeminiApiKey,
     showToast
   } = useApp();
 
@@ -35,20 +38,56 @@ export const SettingsModal: React.FC = () => {
     latencyMs?: number;
   } | null>(null);
 
+  const [inputGeminiKey, setInputGeminiKey] = useState(geminiApiKey);
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [isTestingGemini, setIsTestingGemini] = useState(false);
+  const [geminiTestResult, setGeminiTestResult] = useState<{
+    success: boolean;
+    message: string;
+    modelCount?: number;
+    latencyMs?: number;
+  } | null>(null);
+
   useEffect(() => {
     if (isSettingsModalOpen) {
       setInputKey(apiKey);
+      setInputGeminiKey(geminiApiKey);
       setTestResult(null);
+      setGeminiTestResult(null);
       setShowKey(false);
+      setShowGeminiKey(false);
     }
-  }, [isSettingsModalOpen, apiKey]);
+  }, [isSettingsModalOpen, apiKey, geminiApiKey]);
 
   if (!isSettingsModalOpen) return null;
 
   const handleSave = () => {
     setApiKey(inputKey);
-    showToast('Groq API Key configuration saved', 'success');
+    setGeminiApiKey(inputGeminiKey);
+    showToast('Provider API credentials saved', 'success');
     setIsSettingsModalOpen(false);
+  };
+
+  const handleTestGeminiConnection = async () => {
+    const keyToTest = inputGeminiKey.trim();
+    if (!keyToTest) {
+      setGeminiTestResult({ success: false, message: 'Please enter a Gemini key to test' });
+      return;
+    }
+    setIsTestingGemini(true);
+    setGeminiTestResult(null);
+    try {
+      const res = await testGeminiConnection(keyToTest);
+      setGeminiTestResult(res);
+      if (res.success) {
+        setGeminiApiKey(keyToTest);
+        showToast('Gemini API connected & saved!', 'success');
+      }
+    } catch (err: any) {
+      setGeminiTestResult({ success: false, message: err.message || 'Connection test failed.' });
+    } finally {
+      setIsTestingGemini(false);
+    }
   };
 
   const handleTestConnection = async () => {
@@ -186,6 +225,71 @@ export const SettingsModal: React.FC = () => {
                 <span className="truncate max-w-xs">{testResult.message}</span>
               </div>
             )}
+          </div>
+
+          {/* Google Gemini API Key (Multi-Provider Vault) */}
+          <div className="pt-4 border-t border-theme-border space-y-3">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="font-editorial text-xs font-semibold uppercase tracking-wider text-theme-muted">
+                  Google Gemini API Key (Optional · 1M Context)
+                </label>
+                <a
+                  href="https://aistudio.google.com/apikey"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-theme-accent hover:underline font-mono"
+                >
+                  Get Gemini Key <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+              <div className="relative">
+                <input
+                  type={showGeminiKey ? 'text' : 'password'}
+                  value={inputGeminiKey}
+                  onChange={e => setInputGeminiKey(e.target.value)}
+                  placeholder="AIza..."
+                  className="w-full rounded-btn border border-theme-border bg-theme-elevated px-3.5 py-2.5 pr-10 font-mono text-xs text-theme-primary placeholder:text-theme-muted focus:border-theme-accent focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowGeminiKey(!showGeminiKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-theme-muted hover:text-theme-primary transition-colors"
+                >
+                  {showGeminiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <button
+                type="button"
+                onClick={handleTestGeminiConnection}
+                disabled={isTestingGemini}
+                className="inline-flex items-center gap-2 rounded-btn border border-theme-border bg-theme-elevated px-3.5 py-2 text-xs font-medium text-theme-primary hover:border-theme-borderStrong transition-all disabled:opacity-50 shadow-warm-sm"
+              >
+                <Zap className={`h-3.5 w-3.5 text-theme-accent ${isTestingGemini ? 'animate-spin' : ''}`} />
+                {isTestingGemini ? 'Testing Gemini...' : 'Test Gemini'}
+              </button>
+
+              {geminiTestResult && (
+                <div
+                  className={`inline-flex items-center gap-1.5 rounded-btn px-3 py-1.5 text-xs font-medium border ${
+                    geminiTestResult.success
+                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                      : 'border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+                  }`}
+                >
+                  {geminiTestResult.success ? (
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                  )}
+                  <span className="font-semibold">{geminiTestResult.success ? 'Connected' : 'Invalid Key'}:</span>
+                  <span className="truncate max-w-xs">{geminiTestResult.message}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Inference Engine Info Card */}

@@ -314,6 +314,7 @@ export async function streamChatCompletion({
   temperature = 0.7,
   maxTokens = 2048,
   topP = 1,
+  stopSequences = [],
   onDelta,
   onFinish,
   onError
@@ -324,6 +325,7 @@ export async function streamChatCompletion({
   temperature?: number;
   maxTokens?: number;
   topP?: number;
+  stopSequences?: string[];
   onDelta: (accumulated: string, chunk: string) => void;
   onFinish: (result: {
     content: string;
@@ -376,6 +378,7 @@ export async function streamChatCompletion({
           temperature,
           max_tokens: maxTokens,
           top_p: topP,
+          ...(stopSequences && stopSequences.length > 0 ? { stop: stopSequences.slice(0, 4) } : {}),
           stream: true
         })
       });
